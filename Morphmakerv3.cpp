@@ -61,6 +61,35 @@
 #define WIN_W   1060
 #define WIN_H   620
 
+// Layout constants - all aligned properly
+#define PAD_X       8       // Group box left edge
+#define CTRL_PAD    4       // Padding from group box edge to control
+#define GAP_X       10      // Gap between columns
+
+// Column positions (group box x, control x, width)
+#define COL1_GX     8
+#define COL1_CX     (COL1_GX + CTRL_PAD)      // 12
+#define COL1_W      290
+
+#define COL2_GX     (COL1_GX + COL1_W + GAP_X)  // 308
+#define COL2_CX     (COL2_GX + CTRL_PAD)        // 312
+#define COL2_W      220
+
+#define COL3_GX     (COL2_GX + COL2_W + GAP_X)  // 538
+#define COL3_CX     (COL3_GX + CTRL_PAD)        // 542
+#define COL3_W      220
+
+#define COL4_GX     (COL3_GX + COL3_W + GAP_X)  // 768
+#define COL4_CX     (COL4_GX + CTRL_PAD)        // 772
+#define COL4_W      284
+
+// Verify: COL4_GX + COL4_W = 768 + 284 = 1052, window is 1060, right margin = 8px ✓
+
+// Row heights
+#define ROW_H       26
+#define LABEL_W     90
+#define INPUT_X     100     // Label width + padding
+
 
 static HWND hUsername, hRoleTag, hNtag;
 static HWND hTagR, hTagG, hTagB, hColorPreview;
@@ -287,84 +316,103 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     {
     case WM_CREATE:
     {
-        // ── Column 1: left panel (x=12) ──────────────────────────────────
-        int x = 12, y = 30;
+        // ── Column 1: Identity & Tags ─────────────────────────────────────
+        int x = COL1_CX, y = 30;
         Label(hwnd, L"Username:", x, y, 80, 18);
-        hUsername = Edit(hwnd, ID_USERNAME, x + 100, y, 150, 22);
+        hUsername = Edit(hwnd, ID_USERNAME, x + INPUT_X, y, 170, 22);
 
-        Label(hwnd, L"Role Tag:", x, y + 28, 80, 18);
-        hRoleTag = Edit(hwnd, ID_ROLE_TAG, x + 100, y + 28, 190, 22, L"e.g. VCC Biohazard | Recruit");
+        y += ROW_H;
+        Label(hwnd, L"Role Tag:", x, y, 80, 18);
+        hRoleTag = Edit(hwnd, ID_ROLE_TAG, x + INPUT_X, y, 170, 22, L"e.g. VCC Biohazard | Recruit");
 
-        Label(hwnd, L"Name Tag:", x, y + 56, 80, 18);
-        hNtag = Edit(hwnd, ID_NTAG, x + 100, y + 56, 190, 22, L"e.g. [LR] Oliver");
+        y += ROW_H;
+        Label(hwnd, L"Name Tag:", x, y, 80, 18);
+        hNtag = Edit(hwnd, ID_NTAG, x + INPUT_X, y, 170, 22, L"e.g. [LR] Oliver");
 
-        Label(hwnd, L"Tag R G B:", x, y + 84, 80, 18);
-        hTagR = Edit(hwnd, ID_TAG_R, x + 100, y + 82, 40, 22, L"255");
-        hTagG = Edit(hwnd, ID_TAG_G, x + 148, y + 82, 40, 22, L"255");
-        hTagB = Edit(hwnd, ID_TAG_B, x + 196, y + 82, 40, 22, L"255");
+        y += ROW_H;
+        Label(hwnd, L"Tag R G B:", x, y, 80, 18);
+        hTagR = Edit(hwnd, ID_TAG_R, x + INPUT_X, y, 40, 22, L"255");
+        hTagG = Edit(hwnd, ID_TAG_G, x + INPUT_X + 48, y, 40, 22, L"255");
+        hTagB = Edit(hwnd, ID_TAG_B, x + INPUT_X + 96, y, 40, 22, L"255");
         hColorPreview = CreateWindowW(L"STATIC", nullptr,
             WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | WS_BORDER,
-            x + 244, y + 82, 36, 22, hwnd, (HMENU)ID_COLOR_PREVIEW, nullptr, nullptr);
+            x + INPUT_X + 144, y, 36, 22, hwnd, (HMENU)ID_COLOR_PREVIEW, nullptr, nullptr);
 
-        y += 120;
+        // ── Column 1: Clothing ────────────────────────────────────────────
+        y = 140;  // Aligned below identity section
         Label(hwnd, L"Shirt ID:", x, y, 80, 18);
-        hShirtID = Edit(hwnd, ID_SHIRT_ID, x + 100, y, 150, 22, L"Roblox asset ID");
+        hShirtID = Edit(hwnd, ID_SHIRT_ID, x + INPUT_X, y, 170, 22, L"Roblox asset ID");
 
-        Label(hwnd, L"Pants ID:", x, y + 28, 80, 18);
-        hPantsID = Edit(hwnd, ID_PANTS_ID, x + 100, y + 28, 150, 22, L"Roblox asset ID");
+        y += ROW_H;
+        Label(hwnd, L"Pants ID:", x, y, 80, 18);
+        hPantsID = Edit(hwnd, ID_PANTS_ID, x + INPUT_X, y, 170, 22, L"Roblox asset ID");
 
-        y += 68;
+        // ── Column 1: Hats & Accessories ──────────────────────────────────
+        y = 198;  // Aligned below clothing section
         Label(hwnd, L"Hat/Accessory ID or name:", x, y, 210, 18);
-        hHatInput = Edit(hwnd, ID_HAT_INPUT, x, y + 20, 210, 22, L"e.g. 107189833 or holster");
-        Btn(hwnd, ID_HAT_ADD, L"Add", x + 220, y + 20, 60, 22);
-        hHatList = ListBox(hwnd, ID_HAT_LIST, x, y + 48, 210, 100);
-        Btn(hwnd, ID_HAT_REMOVE, L"Remove", x + 220, y + 48, 60, 22);
+        y += 20;
+        hHatInput = Edit(hwnd, ID_HAT_INPUT, x, y, 210, 22, L"e.g. 107189833 or holster");
+        Btn(hwnd, ID_HAT_ADD, L"Add", x + 220, y, 60, 22);
+        y += 28;
+        hHatList = ListBox(hwnd, ID_HAT_LIST, x, y, 210, 100);
+        Btn(hwnd, ID_HAT_REMOVE, L"Remove", x + 220, y, 60, 22);
 
-        // ── Column 2: Guns (x=312) ───────────────────────────────────────
-        int x2 = 312;
+        // ── Column 2: Guns ────────────────────────────────────────────────
+        int x2 = COL2_CX;
         y = 30;
         Label(hwnd, L"Gun name or ID:", x2, y, 150, 18);
-        hGunInput = Edit(hwnd, ID_GUN_INPUT, x2, y + 20, 150, 22, L"e.g. pistol or m4");
-        Btn(hwnd, ID_GUN_ADD, L"Add", x2 + 160, y + 20, 60, 22);
-        hGunList = ListBox(hwnd, ID_GUN_LIST, x2, y + 48, 150, 290);
-        Btn(hwnd, ID_GUN_REMOVE, L"Remove", x2 + 160, y + 48, 60, 22);
+        y += 20;
+        hGunInput = Edit(hwnd, ID_GUN_INPUT, x2, y, 150, 22, L"e.g. pistol or m4");
+        Btn(hwnd, ID_GUN_ADD, L"Add", x2 + 160, y, 60, 22);
+        y += 28;
+        hGunList = ListBox(hwnd, ID_GUN_LIST, x2, y, 150, 290);
+        Btn(hwnd, ID_GUN_REMOVE, L"Remove", x2 + 160, y, 60, 22);
 
-        // ── Column 3: Gear (x=542) ───────────────────────────────────────
-        int x3 = 542;
+        // ── Column 3: Gear ────────────────────────────────────────────────
+        int x3 = COL3_CX;
+        y = 30;
         Label(hwnd, L"Gear/Equipment name:", x3, y, 150, 18);
-        hGearInput = Edit(hwnd, ID_GEAR_INPUT, x3, y + 20, 150, 22, L"e.g. radio or medkit");
-        Btn(hwnd, ID_GEAR_ADD, L"Add", x3 + 160, y + 20, 60, 22);
-        hGearList = ListBox(hwnd, ID_GEAR_LIST, x3, y + 48, 150, 290);
-        Btn(hwnd, ID_GEAR_REMOVE, L"Remove", x3 + 160, y + 48, 60, 22);
+        y += 20;
+        hGearInput = Edit(hwnd, ID_GEAR_INPUT, x3, y, 150, 22, L"e.g. radio or medkit");
+        Btn(hwnd, ID_GEAR_ADD, L"Add", x3 + 160, y, 60, 22);
+        y += 28;
+        hGearList = ListBox(hwnd, ID_GEAR_LIST, x3, y, 150, 290);
+        Btn(hwnd, ID_GEAR_REMOVE, L"Remove", x3 + 160, y, 60, 22);
 
-        // ── Column 4: Options & Stats (x=770) ────────────────────────────
-        int x4 = 778;
+        // ── Column 4: Options & Stats ─────────────────────────────────────
+        int x4 = COL4_CX;
         y = 30;
         hChkMorph = Chk(hwnd, ID_CHK_MORPH, L"Remove existing morph", x4, y, 250, 20, true);
-        hChkClearSG = Chk(hwnd, ID_CHK_CLEARSG, L"Clear starter gear", x4, y + 24, 250, 20, true);
-        hChkRemoveTools = Chk(hwnd, ID_CHK_REMOVETOOLS, L"Remove tools", x4, y + 48, 250, 20, true);
-        hChkCanrk = Chk(hwnd, ID_CHK_CANRK, L"permcanrk (can re-kill)", x4, y + 72, 250, 20, false);
+        y += ROW_H;
+        hChkClearSG = Chk(hwnd, ID_CHK_CLEARSG, L"Clear starter gear", x4, y, 250, 20, true);
+        y += ROW_H;
+        hChkRemoveTools = Chk(hwnd, ID_CHK_REMOVETOOLS, L"Remove tools", x4, y, 250, 20, true);
+        y += ROW_H;
+        hChkCanrk = Chk(hwnd, ID_CHK_CANRK, L"permcanrk (can re-kill)", x4, y, 250, 20, false);
 
-        y += 104;
+        y += ROW_H + 10;
         Label(hwnd, L"Max Health (75-200 HP):", x4, y, 250, 18);
-        hSldHealth = Slider(hwnd, ID_SLD_HEALTH, x4, y + 20, 190, 28, 75, 200, 100);
-        hLblHealth = Label(hwnd, L"100 HP", x4 + 196, y + 24, 50, 18);
+        y += 20;
+        hSldHealth = Slider(hwnd, ID_SLD_HEALTH, x4, y, 190, 28, 75, 200, 100);
+        hLblHealth = Label(hwnd, L"100 HP", x4 + 196, y + 4, 50, 18);
 
-        y += 54;
+        y += ROW_H + 10;
         Label(hwnd, L"Damage Multiplier (0.25x-4x):", x4, y, 250, 18);
-        hSldDamage = Slider(hwnd, ID_SLD_DAMAGE, x4, y + 20, 190, 28, 25, 400, 100);
-        hLblDamage = Label(hwnd, L"1.00x", x4 + 196, y + 24, 50, 18);
+        y += 20;
+        hSldDamage = Slider(hwnd, ID_SLD_DAMAGE, x4, y, 190, 28, 25, 400, 100);
+        hLblDamage = Label(hwnd, L"1.00x", x4 + 196, y + 4, 50, 18);
 
-        // ── Output area ──────────────────────────────────────────────────
-        y = 384;
-        Label(hwnd, L"Generated Command (paste into Roblox chat):", x, y, 500, 18);
-        hOutput = Edit(hwnd, ID_OUTPUT, x, y + 20, WIN_W - 24, 120, L"", true);
+        // ── Output area ───────────────────────────────────────────────────
+        y = 380;
+        Label(hwnd, L"Generated Command (paste into Roblox chat):", COL1_CX, y, 500, 18);
+        y += 20;
+        hOutput = Edit(hwnd, ID_OUTPUT, COL1_CX, y, WIN_W - 24, 120, L"", true);
         SendMessage(hOutput, EM_SETREADONLY, TRUE, 0);
 
-        y += 148;
-        Btn(hwnd, ID_BTN_GENERATE, L"Generate Command", x, y, 160, 28);
-        Btn(hwnd, ID_BTN_COPY, L"Copy to Clipboard", x + 170, y, 160, 28);
-        Btn(hwnd, ID_BTN_CLEAR, L"Clear All", x + 340, y, 100, 28);
+        y += 132;
+        Btn(hwnd, ID_BTN_GENERATE, L"Generate Command", COL1_CX, y, 160, 28);
+        Btn(hwnd, ID_BTN_COPY, L"Copy to Clipboard", COL1_CX + 170, y, 160, 28);
+        Btn(hwnd, ID_BTN_CLEAR, L"Clear All", COL1_CX + 340, y, 100, 28);
         break;
     }
 
@@ -496,13 +544,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         HDC hdc = BeginPaint(hwnd, &ps);
         SetBkMode(hdc, TRANSPARENT);
 
-        DrawBox(hdc, 8, 24, 290, 107, L" Identity & Tags ");
-        DrawBox(hdc, 8, 134, 290, 65, L" Clothing ");
-        DrawBox(hdc, 8, 201, 290, 158, L" Hats & Accessories ");
-        DrawBox(hdc, 308, 24, 220, 350, L" Guns ");
-        DrawBox(hdc, 538, 24, 220, 350, L" Gear ");
-        DrawBox(hdc, 770, 24, 278, 340, L" Options & Stats ");
-        DrawBox(hdc, 8, 376, WIN_W - 16, 152, L" Output Command ");
+        // Group boxes now perfectly match control positions
+        DrawBox(hdc, COL1_GX, 24, COL1_W, 112, L" Identity & Tags ");
+        DrawBox(hdc, COL1_GX, 136, COL1_W, 58, L" Clothing ");
+        DrawBox(hdc, COL1_GX, 194, COL1_W, 164, L" Hats & Accessories ");
+        DrawBox(hdc, COL2_GX, 24, COL2_W, 350, L" Guns ");
+        DrawBox(hdc, COL3_GX, 24, COL3_W, 350, L" Gear ");
+        DrawBox(hdc, COL4_GX, 24, COL4_W, 340, L" Options & Stats ");
+        DrawBox(hdc, COL1_GX, 374, WIN_W - 16, 152, L" Output Command ");
 
         EndPaint(hwnd, &ps);
         break;
