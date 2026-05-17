@@ -9,6 +9,7 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "shcore.lib")
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 #pragma comment(linker, "/ENTRY:WinMainCRTStartup")
 #pragma comment(linker, "\"/manifestdependency:type='win32' "  \
@@ -62,19 +63,25 @@
 #define WIN_H   620
 
 // ── Layout Constants ────────────────────────────────────────────────
-// Group boxes are drawn with title at (gx, gy) and rounded rect at (gx, gy+9)
-// Controls sit inside the box with 3px padding from box top edge
+// DrawBox draws title at (gx+8, gy) and rounded rect from (gx, gy+9) to (gx+w, gy+h)
+// Title text is ~13px tall, so it occupies [gy, gy+13].
+// The box top edge is at gy+9, so title naturally sits 4px into the box top.
+// CRITICAL: title must NOT overlap previous section's box bottom.
+// Previous box bottom = prev_box_y + prev_box_h
+// Next title_y must be >= prev_box_bottom + 2 (clearance)
 
-#define PAD_X       8       // Group box left edge padding from window
-#define CTRL_PAD    4       // Padding from group box edge to control x
+#define PAD_X       8       // Window edge to group box
+#define CTRL_PAD    4       // Group box edge to control x
 #define GAP_X       10      // Horizontal gap between columns
-#define TITLE_PAD   9       // Space between title text and box top edge
-#define BOX_PAD     3       // Padding inside box before first control
-#define ROW_H       28      // Height of each form row
-#define LABEL_W     80      // Width of labels
-#define INPUT_X     88      // x-offset for inputs (label width + 8px gap)
+#define TITLE_PAD   12      // Space between title text and box top edge (DPI safety margin)
+#define BOX_PAD     3       // Padding inside box before controls
+#define ROW_H       28      // Form row height
+#define LABEL_W     80      // Label width
+#define INPUT_X     88      // Input x offset (label + gap)
+#define TITLE_H     13      // Approximate title text height
+#define BORDER_CLR  2       // Clearance from previous box bottom
 
-// Column positions (group box x, control x, width)
+// Column positions
 #define COL1_GX     8
 #define COL1_CX     (COL1_GX + CTRL_PAD)          // 12
 #define COL1_W      290
@@ -91,41 +98,47 @@
 #define COL4_CX     (COL4_GX + CTRL_PAD)          // 772
 #define COL4_W      284
 
-// Vertical section positions (title y, box y, control start y, box height)
-// Identity & Tags: 4 rows (Username, Role Tag, Name Tag, Tag RGB)
-#define ID_TITLE_Y      16
-#define ID_BOX_Y        (ID_TITLE_Y + TITLE_PAD)  // 25
-#define ID_CTRL_Y       (ID_BOX_Y + BOX_PAD)      // 28
-#define ID_BOX_H        119                         // Ends at 144
+// ── Vertical Layout (calculated to prevent title/box overlap) ───────
+// Identity & Tags (4 rows)
+#define ID_TITLE_Y      20
+#define ID_BOX_Y        (ID_TITLE_Y + TITLE_PAD)      // 29
+#define ID_CTRL_Y       (ID_BOX_Y + BOX_PAD)          // 32
+#define ID_CTRL_END     (ID_CTRL_Y + 4 * ROW_H)       // 144
+#define ID_BOX_H        (ID_CTRL_END + BOX_PAD - ID_BOX_Y)  // 118
+#define ID_BOX_END      (ID_BOX_Y + ID_BOX_H)         // 147
 
-// Clothing: 2 rows (Shirt, Pants)
-#define CL_TITLE_Y      (ID_CTRL_Y + 4*ROW_H + 8)  // 148
-#define CL_BOX_Y        (CL_TITLE_Y + TITLE_PAD)   // 157
-#define CL_CTRL_Y       (CL_BOX_Y + BOX_PAD)       // 160
-#define CL_BOX_H        63                          // Ends at 220
+// Clothing (2 rows) - title clears Identity box bottom + 2px
+#define CL_TITLE_Y      (ID_BOX_END + BORDER_CLR + 2) // 151
+#define CL_BOX_Y        (CL_TITLE_Y + TITLE_PAD)      // 160
+#define CL_CTRL_Y       (CL_BOX_Y + BOX_PAD)          // 163
+#define CL_CTRL_END     (CL_CTRL_Y + 2 * ROW_H)       // 219
+#define CL_BOX_H        (CL_CTRL_END + BOX_PAD - CL_BOX_Y)  // 62
+#define CL_BOX_END      (CL_BOX_Y + CL_BOX_H)         // 222
 
-// Hats & Accessories: label + input + list
-#define HAT_TITLE_Y     (CL_CTRL_Y + 2*ROW_H + 8)  // 224
-#define HAT_BOX_Y       (HAT_TITLE_Y + TITLE_PAD)  // 233
-#define HAT_CTRL_Y      (HAT_BOX_Y + BOX_PAD)      // 236
-#define HAT_BOX_H       155                         // Ends at 388
+// Hats & Accessories - title clears Clothing box bottom + 2px
+#define HAT_TITLE_Y     (CL_BOX_END + BORDER_CLR + 2) // 226
+#define HAT_BOX_Y       (HAT_TITLE_Y + TITLE_PAD)     // 235
+#define HAT_CTRL_Y      (HAT_BOX_Y + BOX_PAD)         // 238
+// Controls: label(238) input(258) list(286) list_h=100 list_end=386
+#define HAT_CTRL_END    389
+#define HAT_BOX_H       (HAT_CTRL_END - HAT_BOX_Y)    // 154
+#define HAT_BOX_END     (HAT_BOX_Y + HAT_BOX_H)       // 389
 
-// Guns & Gear span from Identity top to Hats bottom
-#define GUN_BOX_Y       ID_BOX_Y                    // 25
-#define GUN_BOX_H       (HAT_BOX_Y + HAT_BOX_H - GUN_BOX_Y)  // 363
+// Guns, Gear, Options boxes span from Identity top to Hats bottom
+#define RIGHT_BOX_Y     ID_BOX_Y                      // 29
+#define RIGHT_BOX_END   HAT_BOX_END                   // 389
+#define RIGHT_BOX_H     (RIGHT_BOX_END - RIGHT_BOX_Y) // 360
 
-// Options & Stats - same height as Guns/Gear
-#define OPT_BOX_Y       ID_BOX_Y                    // 25
-#define OPT_BOX_H       GUN_BOX_H                   // 363
-
-// Output Command
-#define OUT_TITLE_Y     (HAT_BOX_Y + HAT_BOX_H + 12)  // 400
-#define OUT_BOX_Y       (OUT_TITLE_Y + TITLE_PAD)     // 409
-#define OUT_CTRL_Y      (OUT_BOX_Y + BOX_PAD)         // 412
-#define OUT_BOX_H       140
+// Output Command - title clears Hats box bottom + 2px
+#define OUT_TITLE_Y     (HAT_BOX_END + BORDER_CLR + 2)  // 393
+#define OUT_BOX_Y       (OUT_TITLE_Y + TITLE_PAD)     // 402
+#define OUT_CTRL_Y      (OUT_BOX_Y + BOX_PAD)         // 405
+#define OUT_BOX_H       130
+#define OUT_BOX_END     (OUT_BOX_Y + OUT_BOX_H)       // 532
 
 // Buttons
-#define BTN_Y           (OUT_CTRL_Y + 120 + 12)       // 544
+#define BTN_Y           (OUT_BOX_END + 8)             // 540
+#define BTN_H           24
 
 
 static HWND hUsername, hRoleTag, hNtag;
@@ -138,6 +151,7 @@ static HWND hChkMorph, hChkClearSG, hChkRemoveTools, hChkCanrk;
 static HWND hSldHealth, hLblHealth;
 static HWND hSldDamage, hLblDamage;
 static HWND hOutput;
+static HBRUSH hColorBrush = nullptr;
 
 
 static std::wstring GetText(HWND h)
@@ -358,7 +372,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         hTagG = Edit(hwnd, ID_TAG_G, x + INPUT_X + 48, y, 40, 22, L"255");
         hTagB = Edit(hwnd, ID_TAG_B, x + INPUT_X + 96, y, 40, 22, L"255");
         hColorPreview = CreateWindowW(L"STATIC", nullptr,
-            WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | WS_BORDER,
+            WS_CHILD | WS_VISIBLE | WS_BORDER,
             x + INPUT_X + 144, y, 36, 22, hwnd, (HMENU)ID_COLOR_PREVIEW, nullptr, nullptr);
 
         // ── Column 1: Clothing ────────────────────────────────────────────
@@ -429,14 +443,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         y = OUT_CTRL_Y;
         Label(hwnd, L"Generated Command (paste into Roblox chat):", COL1_CX, y, 500, 18);
         y += 20;
-        hOutput = Edit(hwnd, ID_OUTPUT, COL1_CX, y, WIN_W - 24, 120, L"", true);
+        hOutput = Edit(hwnd, ID_OUTPUT, COL1_CX, y, WIN_W - 24, 110, L"", true);
         SendMessage(hOutput, EM_SETREADONLY, TRUE, 0);
 
         // ── Buttons ───────────────────────────────────────────────────────
         y = BTN_Y;
-        Btn(hwnd, ID_BTN_GENERATE, L"Generate Command", COL1_CX, y, 160, 28);
-        Btn(hwnd, ID_BTN_COPY, L"Copy to Clipboard", COL1_CX + 170, y, 160, 28);
-        Btn(hwnd, ID_BTN_CLEAR, L"Clear All", COL1_CX + 340, y, 100, 28);
+        Btn(hwnd, ID_BTN_GENERATE, L"Generate Command", COL1_CX, y, 160, BTN_H);
+        Btn(hwnd, ID_BTN_COPY, L"Copy to Clipboard", COL1_CX + 170, y, 160, BTN_H);
+        Btn(hwnd, ID_BTN_CLEAR, L"Clear All", COL1_CX + 340, y, 100, BTN_H);
         break;
     }
 
@@ -450,7 +464,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         else if ((HWND)lp == hSldDamage) {
             int v = (int)SendMessage(hSldDamage, TBM_GETPOS, 0, 0);
             wchar_t buf[16];
-            swprintf_s(buf, 16, L"%.2fx", v / 100.0);
+            double dmg = v / 100.0;
+            swprintf_s(buf, 16, L"%.2fx", dmg);
             SetText(hLblDamage, buf);
         }
         break;
@@ -459,16 +474,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
     case WM_DRAWITEM:
     {
-        auto* dis = (DRAWITEMSTRUCT*)lp;
-        if (dis->CtlID == ID_COLOR_PREVIEW) {
-            HBRUSH br = CreateSolidBrush(RGB(
-                ClampRGB(GetText(hTagR)),
-                ClampRGB(GetText(hTagG)),
-                ClampRGB(GetText(hTagB))));
-            FillRect(dis->hDC, &dis->rcItem, br);
-            DeleteObject(br);
-            return TRUE;
-        }
+        // Not used — color preview now handled in WM_CTLCOLORSTATIC
         break;
     }
 
@@ -478,14 +484,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         int id = LOWORD(wp);
         int evt = HIWORD(wp);
 
-        if ((id == ID_TAG_R || id == ID_TAG_G || id == ID_TAG_B) && evt == EN_CHANGE)
+        // Color preview updates on focus loss (debounced, prevents flicker during typing)
+        if ((id == ID_TAG_R || id == ID_TAG_G || id == ID_TAG_B) && evt == EN_KILLFOCUS) {
+            if (hColorBrush) DeleteObject(hColorBrush);
+            hColorBrush = CreateSolidBrush(RGB(
+                ClampRGB(GetText(hTagR)),
+                ClampRGB(GetText(hTagG)),
+                ClampRGB(GetText(hTagB))));
             InvalidateRect(hColorPreview, nullptr, TRUE);
+            UpdateWindow(hColorPreview);
+        }
 
         if (id == ID_HAT_ADD) {
             std::wstring hat = GetText(hHatInput);
             if (!hat.empty()) {
                 SendMessage(hHatList, LB_ADDSTRING, 0, (LPARAM)hat.c_str());
                 SetText(hHatInput, L"");
+                SetFocus(hHatInput);
             }
         }
         else if (id == ID_HAT_REMOVE) {
@@ -497,6 +512,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             if (!gun.empty()) {
                 SendMessage(hGunList, LB_ADDSTRING, 0, (LPARAM)gun.c_str());
                 SetText(hGunInput, L"");
+                SetFocus(hGunInput);
             }
         }
         else if (id == ID_GUN_REMOVE) {
@@ -508,11 +524,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             if (!gear.empty()) {
                 SendMessage(hGearList, LB_ADDSTRING, 0, (LPARAM)gear.c_str());
                 SetText(hGearInput, L"");
+                SetFocus(hGearInput);
             }
         }
         else if (id == ID_GEAR_REMOVE) {
             int sel = (int)SendMessage(hGearList, LB_GETCURSEL, 0, 0);
             if (sel != LB_ERR) SendMessage(hGearList, LB_DELETESTRING, sel, 0);
+        }
+        // Enter key in input boxes → trigger Add
+        else if (evt == EN_UPDATE && id == ID_HAT_INPUT) {
+            if (GetAsyncKeyState(VK_RETURN) & 0x8000)
+                PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_HAT_ADD, BN_CLICKED), 0);
+        }
+        else if (evt == EN_UPDATE && id == ID_GUN_INPUT) {
+            if (GetAsyncKeyState(VK_RETURN) & 0x8000)
+                PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_GUN_ADD, BN_CLICKED), 0);
+        }
+        else if (evt == EN_UPDATE && id == ID_GEAR_INPUT) {
+            if (GetAsyncKeyState(VK_RETURN) & 0x8000)
+                PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_GEAR_ADD, BN_CLICKED), 0);
         }
         else if (id == ID_BTN_GENERATE) {
             SetText(hOutput, GenerateCommand());
@@ -528,12 +558,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 size_t sz = (text.size() + 1) * sizeof(wchar_t);
                 HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, sz);
                 if (hMem) {
-                    memcpy(GlobalLock(hMem), text.c_str(), sz);
-                    GlobalUnlock(hMem);
-                    SetClipboardData(CF_UNICODETEXT, hMem);
+                    wchar_t* ptr = (wchar_t*)GlobalLock(hMem);
+                    if (ptr) {
+                        wmemcpy(ptr, text.c_str(), text.size() + 1);
+                        GlobalUnlock(hMem);
+                        if (SetClipboardData(CF_UNICODETEXT, hMem)) {
+                            MessageBoxW(hwnd, L"Command copied to clipboard!", L"Success", MB_OK | MB_ICONINFORMATION);
+                        }
+                        else {
+                            GlobalFree(hMem);
+                        }
+                    }
+                    else {
+                        GlobalFree(hMem);
+                    }
                 }
                 CloseClipboard();
-                MessageBoxW(hwnd, L"Command copied to clipboard!", L"Success", MB_OK | MB_ICONINFORMATION);
             }
         }
         else if (id == ID_BTN_CLEAR) {
@@ -568,13 +608,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         HDC hdc = BeginPaint(hwnd, &ps);
         SetBkMode(hdc, TRANSPARENT);
 
-        // Group boxes perfectly aligned with control sections
+        // Group boxes aligned with control sections
         DrawBox(hdc, COL1_GX, ID_TITLE_Y,  COL1_W, ID_BOX_H,  L" Identity & Tags ");
         DrawBox(hdc, COL1_GX, CL_TITLE_Y,  COL1_W, CL_BOX_H,  L" Clothing ");
         DrawBox(hdc, COL1_GX, HAT_TITLE_Y, COL1_W, HAT_BOX_H, L" Hats & Accessories ");
-        DrawBox(hdc, COL2_GX, ID_TITLE_Y,  COL2_W, GUN_BOX_H,  L" Guns ");
-        DrawBox(hdc, COL3_GX, ID_TITLE_Y,  COL3_W, GUN_BOX_H,  L" Gear ");
-        DrawBox(hdc, COL4_GX, ID_TITLE_Y,  COL4_W, OPT_BOX_H, L" Options & Stats ");
+        DrawBox(hdc, COL2_GX, ID_TITLE_Y,  COL2_W, RIGHT_BOX_H, L" Guns ");
+        DrawBox(hdc, COL3_GX, ID_TITLE_Y,  COL3_W, RIGHT_BOX_H, L" Gear ");
+        DrawBox(hdc, COL4_GX, ID_TITLE_Y,  COL4_W, RIGHT_BOX_H, L" Options & Stats ");
         DrawBox(hdc, COL1_GX, OUT_TITLE_Y, WIN_W - 16, OUT_BOX_H, L" Output Command ");
 
         EndPaint(hwnd, &ps);
@@ -591,6 +631,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
     case WM_CTLCOLORSTATIC:
     {
+        // Color preview gets dynamic color brush
+        if ((HWND)lp == hColorPreview) {
+            if (!hColorBrush)
+                hColorBrush = CreateSolidBrush(RGB(255, 255, 255));
+            return (LRESULT)hColorBrush;
+        }
         SetBkColor((HDC)wp, RGB(238, 244, 252));
         SetTextColor((HDC)wp, RGB(30, 30, 60));
         static HBRUSH br = CreateSolidBrush(RGB(238, 244, 252));
@@ -607,6 +653,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nShow)
 {
+    // Enable DPI awareness for proper scaling at 125%, 150%, 200% etc.
+    SetProcessDPIAware();
+
     INITCOMMONCONTROLSEX icc = { sizeof(icc), ICC_WIN95_CLASSES | ICC_BAR_CLASSES };
     InitCommonControlsEx(&icc);
 
@@ -623,7 +672,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nShow)
 
     HWND hwnd = CreateWindowW(
         L"SCPMorphBuilder",
-        L"SCP:RP Morph Builder v2",
+        L"SCP:RP Morph Builder v1.0",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT,
         WIN_W, WIN_H,
