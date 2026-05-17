@@ -2,6 +2,7 @@
 #define _UNICODE
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <cmath>
 #include <commctrl.h>
 #include <string>
 #include <vector>
@@ -9,7 +10,6 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "comctl32.lib")
-#pragma comment(lib, "shcore.lib")
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 #pragma comment(linker, "/ENTRY:WinMainCRTStartup")
 #pragma comment(linker, "\"/manifestdependency:type='win32' "  \
@@ -62,6 +62,12 @@
 #define WIN_W   1060
 #define WIN_H   620
 
+// ── Colour-Wheel Constants ────────────────────────────────────────────
+#define CW_SIZE       200       // diameter of the wheel bitmap and window
+#define CW_CENTER_X   140       // horizontal centre of the wheel in client coords
+#define SV_X          (CW_CENTER_X + CW_SIZE / 2 + 16)  // left edge of SV square
+#define SV_Y          60        // top  edge of SV square
+
 // ── Layout Constants ────────────────────────────────────────────────
 // DrawBox draws title at (gx+8, gy) and rounded rect from (gx, gy+9) to (gx+w, gy+h)
 // Title text is ~13px tall, so it occupies [gy, gy+13].
@@ -73,7 +79,7 @@
 #define PAD_X       8       // Window edge to group box
 #define CTRL_PAD    4       // Group box edge to control x
 #define GAP_X       10      // Horizontal gap between columns
-#define TITLE_PAD   12      // Space between title text and box top edge (DPI safety margin)
+#define TITLE_PAD   9       // Space between title text and box top edge
 #define BOX_PAD     3       // Padding inside box before controls
 #define ROW_H       28      // Form row height
 #define LABEL_W     80      // Label width
@@ -151,7 +157,6 @@ static HWND hChkMorph, hChkClearSG, hChkRemoveTools, hChkCanrk;
 static HWND hSldHealth, hLblHealth;
 static HWND hSldDamage, hLblDamage;
 static HWND hOutput;
-static HBRUSH hColorBrush = nullptr;
 
 
 static std::wstring GetText(HWND h)
@@ -347,6 +352,87 @@ static std::wstring GenerateCommand()
     return result;
 }
 
+// ── HSV / RGB helpers ────────────────────────────────────────────────
+static COLORREF HSVtoRGB(int h, int s, int v)
+{
+    h = h < 0 ? h + 360 : (h >= 360 ? h - 360 : h);
+    double hh = h / 60.0;
+    int    i  = (int)floor(hh);
+    double f  = hh - i;
+    double p  = v * (1.0 - s / 100.0);
+    double q  = v * (1.0 - s * f / 100.0);
+    double t  = v * (1.0 - s * (1.0 - f) / 100.0);
+    v /= 100.0;
+    BYTE r = 0, g = 0, b = 0;
+    switch (i) {
+    case 0: r = (BYTE)(v * 255);       g = (BYTE)(t * 255);       b = (BYTE)(p * 255); break;
+    case 1: r = (BYTE)(q * 255);       g = (BYTE)(v * 255);       b = (BYTE)(p * 255); break;
+    case 2: r = (BYTE)(p * 255);       g = (BYTE)(v * 255);       b = (BYTE)(t * 255); break;
+    case 3: r = (BYTE)(p * 255);       g = (BYTE)(q * 255);       b = (BYTE)(v * 255); break;
+    case 4: r = (BYTE)(t * 255);       g = (BYTE)(p * 255);       b = (BYTE)(v * 255); break;
+    default: r = (BYTE)(v * 255);      g = (BYTE)(p * 255);       b = (BYTE)(q * 255); break;
+    }
+    return RGB(r, g, b);
+}
+
+
+// ── Colour-Wheel Global ───────────────────────────────────────────────
+static HBITMAP hWheelBmp = nullptr;
+
+// ── Colour-Wheel Helper Drawing Routines ─────────────────────────────
+static void DrawWheelCursor(HDC dc)
+{
+    // TODO: keep the stored hue and draw a line / ring that marks the
+    //       current position on the wheel bitmap (was present in ColourWheelProc).
+}
+
+static void DrawSVSquare(HDC dc)
+{
+    // TODO: draw or blit the saturation/value square (was present in ColourWheelProc).
+}
+
+static void DrawPreviewSwatch(HDC dc, int rightEdge)
+{
+    // TODO: draw the current colour preview swatch at the right edge
+    //       (was present in ColourWheelProc).
+}
+
+// ── colour picker initialisation ─────────────────────────────────────
+static HBITMAP MakeWheelBitmap(HDC hdc)
+{
+    HBITMAP bmp = CreateCompatibleBitmap(hdc, CW_SIZE, CW_SIZE);
+    HDC mdc = CreateCompatibleDC(hdc);
+    HBITMAP old = (HBITMAP)SelectObject(mdc, bmp);
+
+    // Fill with a translucent center
+    HBRUSH bg = CreateSolidBrush(RGB(230, 238, 250));
+    RECT rc = { 0, 0, CW_SIZE, CW_SIZE };
+    FillRect(mdc, &rc, bg);
+    DeleteObject(bg);
+
+    // Draw a smooth HSV colour wheel
+    const int cx = CW_SIZE / 2, cy = CW_SIZE / 2, r = CW_SIZE / 2 - 2;
+    for (int angle = 0; angle < 360; angle++)
+    {
+        for (int rad = r; rad >= r * 60 / 100; --rad)
+        {
+            int x0 = cx + (int)(rad * cos((angle - 90) * 3.14159 / 180.0));
+            int y0 = cy + (int)(rad * sin((angle - 90) * 3.14159 / 180.0));
+            HBRUSH br = CreateSolidBrush(
+                HSVtoRGB(angle, 100, (rad * 100) / r));
+            HBRUSH oldb = (HBRUSH)SelectObject(mdc, br);
+            Ellipse(mdc, x0 - 1, y0 - 1, x0 + 2, y0 + 2);
+            SelectObject(mdc, oldb);
+            DeleteObject(br);
+        }
+    }
+
+    SelectObject(mdc, old);
+    DeleteDC(mdc);
+    return bmp;
+}
+
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg)
@@ -372,7 +458,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         hTagG = Edit(hwnd, ID_TAG_G, x + INPUT_X + 48, y, 40, 22, L"255");
         hTagB = Edit(hwnd, ID_TAG_B, x + INPUT_X + 96, y, 40, 22, L"255");
         hColorPreview = CreateWindowW(L"STATIC", nullptr,
-            WS_CHILD | WS_VISIBLE | WS_BORDER,
+            WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | WS_BORDER,
             x + INPUT_X + 144, y, 36, 22, hwnd, (HMENU)ID_COLOR_PREVIEW, nullptr, nullptr);
 
         // ── Column 1: Clothing ────────────────────────────────────────────
@@ -451,6 +537,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         Btn(hwnd, ID_BTN_GENERATE, L"Generate Command", COL1_CX, y, 160, BTN_H);
         Btn(hwnd, ID_BTN_COPY, L"Copy to Clipboard", COL1_CX + 170, y, 160, BTN_H);
         Btn(hwnd, ID_BTN_CLEAR, L"Clear All", COL1_CX + 340, y, 100, BTN_H);
+
+        // Init colour-wheel bitmap
+        HDC tmpDC = GetDC(hwnd);
+        hWheelBmp = MakeWheelBitmap(tmpDC);
+        ReleaseDC(hwnd, tmpDC);
+
         break;
     }
 
@@ -464,8 +556,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         else if ((HWND)lp == hSldDamage) {
             int v = (int)SendMessage(hSldDamage, TBM_GETPOS, 0, 0);
             wchar_t buf[16];
-            double dmg = v / 100.0;
-            swprintf_s(buf, 16, L"%.2fx", dmg);
+            swprintf_s(buf, 16, L"%.2fx", v / 100.0);
             SetText(hLblDamage, buf);
         }
         break;
@@ -474,7 +565,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
     case WM_DRAWITEM:
     {
-        // Not used — color preview now handled in WM_CTLCOLORSTATIC
+        auto* dis = (DRAWITEMSTRUCT*)lp;
+        if (dis->CtlID == ID_COLOR_PREVIEW) {
+            HBRUSH br = CreateSolidBrush(RGB(
+                ClampRGB(GetText(hTagR)),
+                ClampRGB(GetText(hTagG)),
+                ClampRGB(GetText(hTagB))));
+            FillRect(dis->hDC, &dis->rcItem, br);
+            DeleteObject(br);
+            return TRUE;
+        }
         break;
     }
 
@@ -484,23 +584,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         int id = LOWORD(wp);
         int evt = HIWORD(wp);
 
-        // Color preview updates on focus loss (debounced, prevents flicker during typing)
-        if ((id == ID_TAG_R || id == ID_TAG_G || id == ID_TAG_B) && evt == EN_KILLFOCUS) {
-            if (hColorBrush) DeleteObject(hColorBrush);
-            hColorBrush = CreateSolidBrush(RGB(
-                ClampRGB(GetText(hTagR)),
-                ClampRGB(GetText(hTagG)),
-                ClampRGB(GetText(hTagB))));
+        if ((id == ID_TAG_R || id == ID_TAG_G || id == ID_TAG_B) && evt == EN_CHANGE)
             InvalidateRect(hColorPreview, nullptr, TRUE);
-            UpdateWindow(hColorPreview);
-        }
 
         if (id == ID_HAT_ADD) {
             std::wstring hat = GetText(hHatInput);
             if (!hat.empty()) {
                 SendMessage(hHatList, LB_ADDSTRING, 0, (LPARAM)hat.c_str());
                 SetText(hHatInput, L"");
-                SetFocus(hHatInput);
             }
         }
         else if (id == ID_HAT_REMOVE) {
@@ -512,7 +603,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             if (!gun.empty()) {
                 SendMessage(hGunList, LB_ADDSTRING, 0, (LPARAM)gun.c_str());
                 SetText(hGunInput, L"");
-                SetFocus(hGunInput);
             }
         }
         else if (id == ID_GUN_REMOVE) {
@@ -524,25 +614,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             if (!gear.empty()) {
                 SendMessage(hGearList, LB_ADDSTRING, 0, (LPARAM)gear.c_str());
                 SetText(hGearInput, L"");
-                SetFocus(hGearInput);
             }
         }
         else if (id == ID_GEAR_REMOVE) {
             int sel = (int)SendMessage(hGearList, LB_GETCURSEL, 0, 0);
             if (sel != LB_ERR) SendMessage(hGearList, LB_DELETESTRING, sel, 0);
-        }
-        // Enter key in input boxes → trigger Add
-        else if (evt == EN_UPDATE && id == ID_HAT_INPUT) {
-            if (GetAsyncKeyState(VK_RETURN) & 0x8000)
-                PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_HAT_ADD, BN_CLICKED), 0);
-        }
-        else if (evt == EN_UPDATE && id == ID_GUN_INPUT) {
-            if (GetAsyncKeyState(VK_RETURN) & 0x8000)
-                PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_GUN_ADD, BN_CLICKED), 0);
-        }
-        else if (evt == EN_UPDATE && id == ID_GEAR_INPUT) {
-            if (GetAsyncKeyState(VK_RETURN) & 0x8000)
-                PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_GEAR_ADD, BN_CLICKED), 0);
         }
         else if (id == ID_BTN_GENERATE) {
             SetText(hOutput, GenerateCommand());
@@ -558,22 +634,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 size_t sz = (text.size() + 1) * sizeof(wchar_t);
                 HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, sz);
                 if (hMem) {
-                    wchar_t* ptr = (wchar_t*)GlobalLock(hMem);
-                    if (ptr) {
-                        wmemcpy(ptr, text.c_str(), text.size() + 1);
-                        GlobalUnlock(hMem);
-                        if (SetClipboardData(CF_UNICODETEXT, hMem)) {
-                            MessageBoxW(hwnd, L"Command copied to clipboard!", L"Success", MB_OK | MB_ICONINFORMATION);
-                        }
-                        else {
-                            GlobalFree(hMem);
-                        }
-                    }
-                    else {
-                        GlobalFree(hMem);
-                    }
+                    memcpy(GlobalLock(hMem), text.c_str(), sz);
+                    GlobalUnlock(hMem);
+                    SetClipboardData(CF_UNICODETEXT, hMem);
                 }
                 CloseClipboard();
+                MessageBoxW(hwnd, L"Command copied to clipboard!", L"Success", MB_OK | MB_ICONINFORMATION);
             }
         }
         else if (id == ID_BTN_CLEAR) {
@@ -602,20 +668,61 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
 
 
+    case WM_ERASEBKGND:
+        return 1; // tell Windows we handled it — prevents clearing before WM_PAINT
+
     case WM_PAINT:
     {
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
-        SetBkMode(hdc, TRANSPARENT);
+        RECT rc;
+        GetClientRect(hwnd, &rc);
 
-        // Group boxes aligned with control sections
-        DrawBox(hdc, COL1_GX, ID_TITLE_Y,  COL1_W, ID_BOX_H,  L" Identity & Tags ");
-        DrawBox(hdc, COL1_GX, CL_TITLE_Y,  COL1_W, CL_BOX_H,  L" Clothing ");
-        DrawBox(hdc, COL1_GX, HAT_TITLE_Y, COL1_W, HAT_BOX_H, L" Hats & Accessories ");
-        DrawBox(hdc, COL2_GX, ID_TITLE_Y,  COL2_W, RIGHT_BOX_H, L" Guns ");
-        DrawBox(hdc, COL3_GX, ID_TITLE_Y,  COL3_W, RIGHT_BOX_H, L" Gear ");
-        DrawBox(hdc, COL4_GX, ID_TITLE_Y,  COL4_W, RIGHT_BOX_H, L" Options & Stats ");
-        DrawBox(hdc, COL1_GX, OUT_TITLE_Y, WIN_W - 16, OUT_BOX_H, L" Output Command ");
+        // Create off-screen buffer
+        HDC memDC = CreateCompatibleDC(hdc);
+        HBITMAP memBmp = CreateCompatibleBitmap(hdc, rc.right, rc.bottom);
+        HBITMAP oldBmp = (HBITMAP)SelectObject(memDC, memBmp);
+
+        // Fill background
+        HBRUSH bg = CreateSolidBrush(RGB(230, 238, 250));
+        FillRect(memDC, &rc, bg);
+        DeleteObject(bg);
+
+        // Blit wheel bitmap onto buffer
+        if (hWheelBmp) {
+            HDC wheelDC = CreateCompatibleDC(memDC);
+            HBITMAP oldWheel = (HBITMAP)SelectObject(wheelDC, hWheelBmp);
+            BitBlt(memDC, 0, 0, CW_SIZE, CW_SIZE, wheelDC, 0, 0, SRCCOPY);
+            SelectObject(wheelDC, oldWheel);
+            DeleteDC(wheelDC);
+        }
+
+        // Draw everything onto the buffer
+        DrawWheelCursor(memDC);
+        DrawSVSquare(memDC);
+        DrawPreviewSwatch(memDC, rc.right);
+
+        // Labels
+        SetBkColor(memDC, RGB(230, 238, 250));
+        SetTextColor(memDC, RGB(30, 30, 60));
+        HFONT f = CreateFontW(13, 0, 0, 0, FW_BOLD, 0, 0, 0,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+            CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+        HFONT of = (HFONT)SelectObject(memDC, f);
+        const wchar_t* t1 = L"Hue / Saturation";
+        TextOutW(memDC, CW_CENTER_X - 50, 2, t1, (int)wcslen(t1));
+        const wchar_t* t2 = L"Brightness";
+        TextOutW(memDC, SV_X, SV_Y - 16, t2, (int)wcslen(t2));
+        SelectObject(memDC, of);
+        DeleteObject(f);
+
+        // Flip buffer to screen in one shot
+        BitBlt(hdc, 0, 0, rc.right, rc.bottom, memDC, 0, 0, SRCCOPY);
+
+        // Cleanup
+        SelectObject(memDC, oldBmp);
+        DeleteObject(memBmp);
+        DeleteDC(memDC);
 
         EndPaint(hwnd, &ps);
         break;
@@ -631,12 +738,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
     case WM_CTLCOLORSTATIC:
     {
-        // Color preview gets dynamic color brush
-        if ((HWND)lp == hColorPreview) {
-            if (!hColorBrush)
-                hColorBrush = CreateSolidBrush(RGB(255, 255, 255));
-            return (LRESULT)hColorBrush;
-        }
         SetBkColor((HDC)wp, RGB(238, 244, 252));
         SetTextColor((HDC)wp, RGB(30, 30, 60));
         static HBRUSH br = CreateSolidBrush(RGB(238, 244, 252));
@@ -644,6 +745,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
 
     case WM_DESTROY:
+        if (hWheelBmp) { DeleteObject(hWheelBmp); hWheelBmp = nullptr; }
         PostQuitMessage(0);
         break;
     }
@@ -653,9 +755,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nShow)
 {
-    // Enable DPI awareness for proper scaling at 125%, 150%, 200% etc.
-    SetProcessDPIAware();
-
     INITCOMMONCONTROLSEX icc = { sizeof(icc), ICC_WIN95_CLASSES | ICC_BAR_CLASSES };
     InitCommonControlsEx(&icc);
 
@@ -672,7 +771,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nShow)
 
     HWND hwnd = CreateWindowW(
         L"SCPMorphBuilder",
-        L"SCP:RP Morph Builder v1.0",
+        L"SCP:RP Morph Builder v2",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT,
         WIN_W, WIN_H,
