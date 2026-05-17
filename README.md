@@ -59,7 +59,7 @@ No more typing long commands manually in Roblox chat.
 ---
 
 ## 🖼 Screenshot
-> `assets/screenshot.png`
+![SCP:RP Morph Builder](assets/screenshot.png)
 
 ---
 
