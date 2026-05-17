@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCP:RP Morph Builder v1.0</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbars for a neat, modern scroll style */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.4);
+        }
+
+        /* Highly visible custom styled range slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #1e293b; /* slate-800 */
+            height: 6px;
+            border-radius: 9999px;
+            outline: none;
+        }
+        /* Chrome, Safari, Opera and Edge */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #f59e0b; /* Bright Amber-500 */
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.1s ease, box-shadow 0.1s ease;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+            background: #fbbf24; /* Lighter Amber-400 */
+            box-shadow: 0 0 14px rgba(251, 191, 36, 0.8);
+        }
+        /* Firefox */
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #f59e0b;
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.1s ease, box-shadow 0.1s ease;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+        }
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.25);
+            background: #fbbf24;
+            box-shadow: 0 0 14px rgba(251, 191, 36, 0.8);
+        }
+    </style>
+</head>
+<body class="min-h-full flex flex-col justify-between p-4 md:p-6 lg:p-8 bg-gradient-to-b from-slate-900 to-slate-950">
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-20px] opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-3 bg-emerald-500 text-slate-950 px-4 py-3 rounded-xl shadow-xl font-semibold">
+        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+        <span id="toast-message">Copied to clipboard!</span>
+    </div>
+
+    <div class="max-w-6xl mx-auto w-full flex-grow flex flex-col gap-6">
+        <!-- Simplified Header -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/60 pb-5">
+            <div class="flex items-center gap-3.5">
+                <div class="bg-blue-500/10 text-blue-400 p-2.5 rounded-2xl border border-blue-500/20">
+                    <i data-lucide="sparkles" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">SCP:RP Morph Builder</h1>
+                    <p class="text-xs text-slate-400">Create custom database commands quickly & easily</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 self-start sm:self-auto bg-slate-900/40 border border-slate-800/80 px-3 py-1.5 rounded-full text-xs text-slate-400 font-mono">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                READY TO BUILD
+            </div>
+        </header>
+
+        <!-- Simplified Main Grid: 3 Clean Columns -->
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- COLUMN 1: Character & Style -->
+            <div class="flex flex-col gap-6">
+                <!-- Card: Identity & Color -->
+                <section class="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+                    <div class="flex items-center gap-2 border-b border-slate-800/40 pb-3">
+                        <i data-lucide="user" class="w-4.5 h-4.5 text-blue-400"></i>
+                        <h2 class="font-bold text-sm uppercase tracking-wider text-slate-200">Identity & Color</h2>
+                    </div>
+                    
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <label for="username" class="block text-xs font-semibold text-slate-400 mb-1">Username</label>
+                            <input type="text" id="username" class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none transition-all" placeholder="Enter target player name">
+                        </div>
+                        <div>
+                            <label for="roleTag" class="block text-xs font-semibold text-slate-400 mb-1">Role Tag (Optional)</label>
+                            <input type="text" id="roleTag" class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none transition-all" placeholder="e.g. Recruit, Specialist">
+                        </div>
+                        <div>
+                            <label for="nTag" class="block text-xs font-semibold text-slate-400 mb-1">Name Tag (Optional)</label>
+                            <input type="text" id="nTag" class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none transition-all" placeholder="e.g. [LR] Oliver">
+                        </div>
+                        
+                        <!-- Visual Color Picker & presets -->
+                        <div class="border-t border-slate-800/40 pt-4">
+                            <label class="block text-xs font-semibold text-slate-400 mb-2">Tag Color Wheel</label>
+                            <div class="flex items-center gap-4 bg-slate-950/30 border border-slate-800/60 p-3 rounded-xl">
+                                <!-- Interactive Color Wheel Style Picker -->
+                                <div class="relative flex-shrink-0">
+                                    <input type="color" id="colorPicker" value="#3b82f6" class="absolute inset-0 opacity-0 cursor-pointer w-12 h-12 rounded-full">
+                                    <div id="colorPreview" class="w-12 h-12 rounded-full border-2 border-slate-700 bg-blue-500 shadow-lg cursor-pointer flex items-center justify-center hover:scale-105 transition-transform" title="Click to open color wheel">
+                                        <div class="w-4 h-4 rounded-full bg-slate-950/45 border border-white/40"></div>
+                                    </div>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="text-xs font-bold text-slate-300">Choose Custom Color</div>
+                                    <div class="text-[11px] text-slate-500 font-mono mt-0.5" id="lblHex">#3b82f6</div>
+                                    <div class="grid grid-cols-3 gap-1 mt-1.5">
+                                        <input type="number" id="tagR" value="59" min="0" max="255" class="bg-slate-950/60 border border-slate-800 rounded-lg py-0.5 text-center text-xs font-mono text-white focus:outline-none focus:border-blue-500">
+                                        <input type="number" id="tagG" value="130" min="0" max="255" class="bg-slate-950/60 border border-slate-800 rounded-lg py-0.5 text-center text-xs font-mono text-white focus:outline-none focus:border-blue-500">
+                                        <input type="number" id="tagB" value="246" min="0" max="255" class="bg-slate-950/60 border border-slate-800 rounded-lg py-0.5 text-center text-xs font-mono text-white focus:outline-none focus:border-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Fast Preset Swatches -->
+                            <div class="flex flex-wrap gap-1.5 mt-2.5">
+                                <button onclick="setPresetColor(239, 68, 68)" class="w-5 h-5 rounded-full bg-red-500 border border-white/10 hover:scale-110 transition-transform" title="Red"></button>
+                                <button onclick="setPresetColor(34, 197, 94)" class="w-5 h-5 rounded-full bg-green-500 border border-white/10 hover:scale-110 transition-transform" title="Green"></button>
+                                <button onclick="setPresetColor(59, 130, 246)" class="w-5 h-5 rounded-full bg-blue-500 border border-white/10 hover:scale-110 transition-transform" title="Blue"></button>
+                                <button onclick="setPresetColor(234, 179, 8)" class="w-5 h-5 rounded-full bg-yellow-500 border border-white/10 hover:scale-110 transition-transform" title="Yellow"></button>
+                                <button onclick="setPresetColor(168, 85, 247)" class="w-5 h-5 rounded-full bg-purple-500 border border-white/10 hover:scale-110 transition-transform" title="Purple"></button>
+                                <button onclick="setPresetColor(6, 182, 212)" class="w-5 h-5 rounded-full bg-cyan-500 border border-white/10 hover:scale-110 transition-transform" title="Cyan"></button>
+                                <button onclick="setPresetColor(249, 115, 22)" class="w-5 h-5 rounded-full bg-orange-500 border border-white/10 hover:scale-110 transition-transform" title="Orange"></button>
+                                <button onclick="setPresetColor(255, 255, 255)" class="w-5 h-5 rounded-full bg-white border border-slate-400 hover:scale-110 transition-transform" title="White"></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- COLUMN 2: Clothing & Loadout -->
+            <div class="flex flex-col gap-6">
+                <!-- Combined Assets Card (Clothing, Accessories, Items) -->
+                <section class="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+                    <div class="flex items-center gap-2 border-b border-slate-800/40 pb-3">
+                        <i data-lucide="shield" class="w-4.5 h-4.5 text-emerald-400"></i>
+                        <h2 class="font-bold text-sm uppercase tracking-wider text-slate-200">Clothing & Loadout</h2>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <!-- Clothing Subgroup -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="shirtID" class="block text-xs font-semibold text-slate-400 mb-1">Shirt ID</label>
+                                <input type="text" id="shirtID" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/80 transition-all font-mono" placeholder="Asset ID">
+                            </div>
+                            <div>
+                                <label for="pantsID" class="block text-xs font-semibold text-slate-400 mb-1">Pants ID</label>
+                                <input type="text" id="pantsID" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/80 transition-all font-mono" placeholder="Asset ID">
+                            </div>
+                        </div>
+
+                        <!-- Combined Items Stack for simplicity -->
+                        <div class="flex flex-col gap-3.5 border-t border-slate-800/40 pt-3">
+                            <!-- Hats Section -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Hats & Accessories</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="hatInput" class="flex-grow bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all" placeholder="ID or name...">
+                                    <button onclick="addListItem('hatInput', 'hatList')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 rounded-xl transition-colors flex items-center justify-center">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <div id="hatList" class="flex flex-wrap gap-1.5 mt-2 max-h-[72px] overflow-y-auto">
+                                    <div class="text-[11px] text-slate-600 italic p-1" id="hatList-empty">No hats added yet.</div>
+                                </div>
+                            </div>
+
+                            <!-- Guns Section -->
+                            <div class="border-t border-slate-800/30 pt-3">
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Guns</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="gunInput" class="flex-grow bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all" placeholder="e.g. pistol, m4...">
+                                    <button onclick="addListItem('gunInput', 'gunList')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 rounded-xl transition-colors flex items-center justify-center">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <div id="gunList" class="flex flex-wrap gap-1.5 mt-2 max-h-[72px] overflow-y-auto">
+                                    <div class="text-[11px] text-slate-600 italic p-1" id="gunList-empty">No guns added yet.</div>
+                                </div>
+                            </div>
+
+                            <!-- Gear Section -->
+                            <div class="border-t border-slate-800/30 pt-3">
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Gear & Equipment</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="gearInput" class="flex-grow bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all" placeholder="e.g. radio, medkit...">
+                                    <button onclick="addListItem('gearInput', 'gearList')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 rounded-xl transition-colors flex items-center justify-center">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <div id="gearList" class="flex flex-wrap gap-1.5 mt-2 max-h-[72px] overflow-y-auto">
+                                    <div class="text-[11px] text-slate-600 italic p-1" id="gearList-empty">No gear added yet.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- COLUMN 3: Options, Stats & Modifiers -->
+            <div class="flex flex-col gap-6">
+                <!-- Card: Options & Stats -->
+                <section class="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+                    <div class="flex items-center gap-2 border-b border-slate-800/40 pb-3">
+                        <i data-lucide="sliders-horizontal" class="w-4.5 h-4.5 text-cyan-400"></i>
+                        <h2 class="font-bold text-sm uppercase tracking-wider text-slate-200">Options & Stats</h2>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <!-- High Contrast Color-Coded Toggles -->
+                        <div class="flex flex-col gap-3 bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/40">
+                            <label class="relative flex items-center justify-between cursor-pointer group">
+                                <span class="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">Remove existing morph</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="chkMorph" class="sr-only peer" checked>
+                                    <div class="w-10 h-5 bg-rose-600/90 rounded-full transition-colors duration-200 peer peer-focus:outline-none peer-checked:bg-emerald-600/90 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center justify-between cursor-pointer group">
+                                <span class="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">Clear starter gear</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="chkClearSG" class="sr-only peer" checked>
+                                    <div class="w-10 h-5 bg-rose-600/90 rounded-full transition-colors duration-200 peer peer-focus:outline-none peer-checked:bg-emerald-600/90 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center justify-between cursor-pointer group">
+                                <span class="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">Remove tools</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="chkRemoveTools" class="sr-only peer" checked>
+                                    <div class="w-10 h-5 bg-rose-600/90 rounded-full transition-colors duration-200 peer peer-focus:outline-none peer-checked:bg-emerald-600/90 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center justify-between cursor-pointer group">
+                                <span class="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">Permcanrk (re-kill)</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="chkCanrk" class="sr-only peer">
+                                    <div class="w-10 h-5 bg-rose-600/90 rounded-full transition-colors duration-200 peer peer-focus:outline-none peer-checked:bg-emerald-600/90 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Sliders with Highlighted Thumbs -->
+                        <div class="flex flex-col gap-3 border-t border-slate-800/40 pt-3">
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                    <span>Max Health</span>
+                                    <span id="lblHealth" class="text-blue-400 font-mono text-xs">100 HP</span>
+                                </div>
+                                <input type="range" id="sldHealth" min="75" max="200" value="100" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                    <span>Damage Multiplier</span>
+                                    <span id="lblDamage" class="text-blue-400 font-mono text-xs">1.00x</span>
+                                </div>
+                                <input type="range" id="sldDamage" min="25" max="400" value="100" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Command Output (Full Width) -->
+        <section class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-md flex flex-col gap-3">
+            <div class="flex items-center gap-2 justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="terminal" class="w-4.5 h-4.5 text-sky-400"></i>
+                    <h2 class="font-bold text-sm uppercase tracking-wider text-slate-200">Output Command</h2>
+                </div>
+                <div class="text-[10px] text-slate-500 uppercase font-mono tracking-wider bg-slate-950 px-2 py-0.5 rounded">
+                    console output
+                </div>
+            </div>
+
+            <textarea id="output" readonly rows="2" class="w-full bg-slate-950 border border-slate-850 rounded-xl p-3 text-sm font-mono text-emerald-400 focus:outline-none focus:border-sky-500/30 resize-none min-h-[64px]" placeholder="Ready. Configure your options and click 'Generate Command' below!"></textarea>
+
+            <div class="flex flex-wrap gap-2 pt-1">
+                <button onclick="generateCommand()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs shadow-lg shadow-blue-900/10 active:scale-[0.98]">
+                    <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                    Generate
+                </button>
+                <button onclick="copyToClipboard()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-5 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs active:scale-[0.98]">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    Copy to Clipboard
+                </button>
+                <button onclick="clearAll()" class="sm:ml-auto bg-slate-950 hover:bg-rose-950/20 text-slate-500 hover:text-rose-400 font-semibold px-4 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs border border-slate-850 hover:border-rose-900/20 active:scale-[0.98]">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    Reset
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Human-crafted Footer -->
+    <footer class="max-w-6xl mx-auto w-full border-t border-slate-800/60 mt-10 pt-6 pb-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+        <div class="flex items-center gap-2">
+            <span>Build by Trinibos1 and (Revs Lawyer) with</span>
+            <i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse"></i>
+            <span>for the SCP:RP community</span>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <a href="https://github.com/trinibos1/Morphmaker/tree/main" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white px-3.5 py-2 rounded-xl transition-all shadow-sm">
+                <i data-lucide="github" class="w-4.5 h-4.5"></i>
+                <span class="font-medium">View on GitHub</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-60"></i>
+            </a>
+        </div>
+    </footer>
+
+    <script>
+        // Core state to simplify list tracking
+        const state = {
+            hats: [],
+            guns: [],
+            gear: []
+        };
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Target UI Elements
+        const tagR = document.getElementById('tagR');
+        const tagG = document.getElementById('tagG');
+        const tagB = document.getElementById('tagB');
+        const colorPicker = document.getElementById('colorPicker');
+        const colorPreview = document.getElementById('colorPreview');
+        const lblHex = document.getElementById('lblHex');
+
+        // RGB Color helpers
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        // Synchronize elements
+        function syncFromPicker() {
+            const rgb = hexToRgb(colorPicker.value);
+            if (rgb) {
+                tagR.value = rgb.r;
+                tagG.value = rgb.g;
+                tagB.value = rgb.b;
+                lblHex.textContent = colorPicker.value.toUpperCase();
+                colorPreview.style.backgroundColor = colorPicker.value;
+            }
+        }
+
+        // Keep values aligned with custom constraints
+        function syncFromRgbInputs() {
+            let r = Math.max(0, Math.min(255, parseInt(tagR.value, 10) || 0));
+            let g = Math.max(0, Math.min(255, parseInt(tagG.value, 10) || 0));
+            let b = Math.max(0, Math.min(255, parseInt(tagB.value, 10) || 0));
+            
+            tagR.value = r;
+            tagG.value = g;
+            tagB.value = b;
+
+            const hex = rgbToHex(r, g, b);
+            colorPicker.value = hex;
+            lblHex.textContent = hex.toUpperCase();
+            colorPreview.style.backgroundColor = hex;
+        }
+
+        // Apply selected preset values directly
+        function setPresetColor(r, g, b) {
+            tagR.value = r;
+            tagG.value = g;
+            tagB.value = b;
+            syncFromRgbInputs();
+        }
+
+        colorPicker.addEventListener('input', syncFromPicker);
+        tagR.addEventListener('input', syncFromRgbInputs);
+        tagG.addEventListener('input', syncFromRgbInputs);
+        tagB.addEventListener('input', syncFromRgbInputs);
+
+        // Slider Updates
+        const sldHealth = document.getElementById('sldHealth');
+        const lblHealth = document.getElementById('lblHealth');
+        const sldDamage = document.getElementById('sldDamage');
+        const lblDamage = document.getElementById('lblDamage');
+
+        sldHealth.addEventListener('input', () => {
+            lblHealth.textContent = `${sldHealth.value} HP`;
+        });
+
+        sldDamage.addEventListener('input', () => {
+            lblDamage.textContent = `${(sldDamage.value / 100).toFixed(2)}x`;
+        });
+
+        // Simpler tag-like item list renderer
+        function renderItems(listId) {
+            const container = document.getElementById(listId);
+            const arrayKey = listId === 'hatList' ? 'hats' : (listId === 'gunList' ? 'guns' : 'gear');
+            const items = state[arrayKey];
+
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = "text-[11px] text-slate-600 italic p-1";
+                empty.id = `${listId}-empty`;
+                empty.textContent = `No additions yet.`;
+                container.appendChild(empty);
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const tagSpan = document.createElement('span');
+                tagSpan.className = "inline-flex items-center gap-1 bg-slate-800/80 text-slate-200 text-xs px-2 py-0.5 rounded-lg border border-slate-700/60 font-mono";
+                
+                const text = document.createElement('span');
+                text.textContent = item;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "text-slate-400 hover:text-rose-400 transition-colors ml-0.5 focus:outline-none";
+                deleteBtn.innerHTML = `<i data-lucide="x" class="w-3 h-3"></i>`;
+                deleteBtn.onclick = (e) => {
+                    e.preventDefault();
+                    state[arrayKey].splice(index, 1);
+                    renderItems(listId);
+                };
+
+                tagSpan.appendChild(text);
+                tagSpan.appendChild(deleteBtn);
+                container.appendChild(tagSpan);
+            });
+
+            lucide.createIcons();
+        }
+
+        function addListItem(inputId, listId) {
+            const input = document.getElementById(inputId);
+            const val = input.value.trim();
+            if (!val) return;
+
+            const arrayKey = listId === 'hatList' ? 'hats' : (listId === 'gunList' ? 'guns' : 'gear');
+            state[arrayKey].push(val);
+            input.value = '';
+            input.focus();
+            renderItems(listId);
+        }
+
+        // Bind Enter key behavior to inputs
+        ['hatInput', 'gunInput', 'gearInput'].forEach(id => {
+            document.getElementById(id).addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (id === 'hatInput') addListItem('hatInput', 'hatList');
+                    if (id === 'gunInput') addListItem('gunInput', 'gunList');
+                    if (id === 'gearInput') addListItem('gearInput', 'gearList');
+                }
+            });
+        });
+
+        // Custom Safe Toast notifications (No raw alerts!)
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            const msgSpan = document.getElementById('toast-message');
+            msgSpan.textContent = message;
+            
+            if (isSuccess) {
+                toast.className = toast.className.replace('bg-rose-500', 'bg-emerald-500');
+            } else {
+                toast.className = toast.className.replace('bg-emerald-500', 'bg-rose-500');
+            }
+
+            toast.classList.remove('translate-y-[-20px]', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        // Logic compiler matching the robust backend functionality
+        function generateCommand() {
+            const user = document.getElementById('username').value.trim();
+            const output = document.getElementById('output');
+
+            if (!user) {
+                output.value = "[ERROR: Enter a username first!]";
+                showToast("Please enter a username first!", false);
+                return "";
+            }
+
+            const cmds = [];
+
+            if (document.getElementById('chkMorph').checked) {
+                cmds.push(`permmorph ${user} remove`);
+            }
+            if (document.getElementById('chkClearSG').checked) {
+                cmds.push(`Clearstartergear ${user}`);
+            }
+            if (document.getElementById('chkRemoveTools').checked) {
+                cmds.push(`Removetools ${user}`);
+            }
+
+            const shirt = document.getElementById('shirtID').value.trim();
+            if (shirt) cmds.push(`permshirt ${user} ${shirt}`);
+
+            const pants = document.getElementById('pantsID').value.trim();
+            if (pants) cmds.push(`permpants ${user} ${pants}`);
+
+            if (state.hats.length > 0) {
+                cmds.push(`permhat ${user} ${state.hats.join(',')}`);
+            }
+
+            const rtag = document.getElementById('roleTag').value.trim();
+            if (rtag) cmds.push(`permrtag ${user} ${rtag}`);
+
+            const ntag = document.getElementById('nTag').value.trim();
+            if (ntag) cmds.push(`permntag ${user} ${ntag}`);
+
+            let r = Math.max(0, Math.min(255, parseInt(tagR.value, 10) || 0));
+            let g = Math.max(0, Math.min(255, parseInt(tagG.value, 10) || 0));
+            let b = Math.max(0, Math.min(255, parseInt(tagB.value, 10) || 0));
+            cmds.push(`permcrtag ${user} ${r} ${g} ${b}`);
+
+            const hp = parseInt(sldHealth.value, 10);
+            if (hp !== 100) cmds.push(`permhealth ${user} ${hp}`);
+
+            const dmgRaw = parseInt(sldDamage.value, 10);
+            if (dmgRaw !== 100) {
+                cmds.push(`permdamagemultiplier ${user} ${(dmgRaw / 100).toFixed(2)}`);
+            }
+
+            if (document.getElementById('chkCanrk').checked) {
+                cmds.push(`permcanrk ${user} true`);
+            }
+
+            if (state.guns.length > 0 || state.gear.length > 0) {
+                const combined = [...state.guns, ...state.gear];
+                cmds.push(`startergear ${user} ${combined.join(',')}`);
+            }
+
+            const finalCommand = `run ${cmds.join(' & ')}`;
+            output.value = finalCommand;
+            return finalCommand;
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            let text = output.value;
+
+            if (!text || text.startsWith("[ERROR")) {
+                text = generateCommand();
+            }
+
+            if (text && !text.startsWith("[ERROR")) {
+                const tempTextArea = document.createElement("textarea");
+                tempTextArea.value = text;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showToast("Command copied!");
+                } catch (err) {
+                    showToast("Failed to copy command.", false);
+                }
+                
+                document.body.removeChild(tempTextArea);
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('username').value = '';
+            document.getElementById('roleTag').value = '';
+            document.getElementById('nTag').value = '';
+            
+            setPresetColor(59, 130, 246); // Default back to nice Roblox Slate Blue
+
+            document.getElementById('shirtID').value = '';
+            document.getElementById('pantsID').value = '';
+
+            state.hats = [];
+            state.guns = [];
+            state.gear = [];
+            
+            renderItems('hatList');
+            renderItems('gunList');
+            renderItems('gearList');
+
+            sldHealth.value = 100;
+            lblHealth.textContent = "100 HP";
+
+            sldDamage.value = 100;
+            lblDamage.textContent = "1.00x";
+
+            document.getElementById('chkMorph').checked = true;
+            document.getElementById('chkClearSG').checked = true;
+            document.getElementById('chkRemoveTools').checked = true;
+            document.getElementById('chkCanrk').checked = false;
+
+            document.getElementById('output').value = '';
+            showToast("Workspace reset.");
+        }
+
+        // Set initial color state
+        syncFromRgbInputs();
+    </script>
+</body>
+</html>
