@@ -110,7 +110,7 @@ No more typing long commands manually in Roblox chat. Just configure your morph,
 
 | Platform | Type | Link |
 |----------|------|------|
-| Web App | Live Interactive Site | 👉 PLACEHOLDER_LINK 👈 |
+| Web App | Live Interactive Site | https://trinibos1.github.io/Morphmaker/ |
 | Windows Desktop | Standalone `.exe` | https://github.com/trinibos1/Morphmaker/releases/tag/Stable |
 
 ---
