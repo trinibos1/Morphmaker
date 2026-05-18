@@ -738,7 +738,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         y += ROW_H;
         hChkRemoveTools = Chk(hwnd, ID_CHK_REMOVETOOLS, L"Remove tools", x4, y, 250, 20, true);
         y += ROW_H;
-        hChkCanrk = Chk(hwnd, ID_CHK_CANRK, L"permcanrk (can re-kill)", x4, y, 250, 20, false);
+        hChkCanrk = Chk(hwnd, ID_CHK_CANRK, L"Random Kill", x4, y, 250, 20, false);
 
         y += ROW_H + 10;
         Label(hwnd, L"Max Health (75-200 HP):", x4, y, 250, 18);
